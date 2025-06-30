@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>💫 결핍의 고리: 무한 사이클 💫</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f8ff;
+      text-align: center;
+      padding: 15px 10px;
+      margin: 0 auto;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    h1 {
+      color: #333;
+      font-size: 1.8em;
+      margin-bottom: 10px;
+      line-height: 1.2em;
+    }
+    #ai {
+      font-style: italic;
+      color: #444;
+      margin-bottom: 20px;
+      animation: blink 2s infinite;
+      font-size: 1em;
+      min-height: 1.4em;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    #result {
+      font-size: 1.2em;
+      margin: 15px 0;
+      min-height: 45px;
+      font-weight: bold;
+    }
+    #points, #gold, #wallet, #highscore, #daily {
+      font-size: 1.1em;
+      margin-bottom: 6px;
+      color: #222;
+    }
+    #daily {
+      font-size: 1em;
+      margin: 12px 0 15px;
+      color: #2d68c4;
+    }
+    button {
+      padding: 14px 0;
+      font-size: 1.3em;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      width: 90vw;
+      max-width: 320px;
+      margin: 8px auto;
+      display: block;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:hover {
+      background-color: #218838;
+      transform: scale(1.05);
+    }
+    button:disabled {
+      background-color: #94d3a2;
+      cursor: default;
+      transform: none;
+    }
+    #history {
+      margin-top: 20px;
+      max-height: 220px;
+      overflow-y: auto;
+      border-top: 1px solid #ccc;
+      padding-top: 12px;
+      color: #666;
+      font-size: 0.9em;
+      text-align: left;
+      line-height: 1.3em;
+      max-width: 90vw;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .good { color: green; }
+    .bad { color: red; }
+    .neutral { color: gray; }
+
+    #shop {
+      margin-top: 25px;
+      max-width: 90vw;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #shop h3 {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+    #shop button {
+      width: 100%;
+      margin: 6px 0;
+      font-size: 1.1em;
+      border-radius: 10px;
+      background-color: #007bff;
+    }
+    #shop button:hover {
+      background-color: #0056b3;
+    }
+
+    #loot-display {
+      margin-top: 25px;
+      padding: 12px 8px;
+      background-color: #ffffffcc;
+      border-radius: 12px;
+      max-width: 90vw;
+      margin-left: auto;
+      margin-right: auto;
+      user-select: none;
+    }
+    #loot-display h3 {
+      margin-bottom: 10px;
+      font-size: 1.3em;
+    }
+    .loot-item {
+      display: inline-block;
+      width: 90px;
+      margin: 4px 5px;
+      font-size: 0.95em;
+      font-weight: 600;
+      color: #222;
+    }
+    #shareBtn {
+      margin-top: 25px;
+      background-color: #ffca28;
+      color: #333;
+      font-weight: 700;
+      border-radius: 14px;
+      max-width: 320px;
+      width: 90vw;
+    }
+    #shareBtn:hover {
+      background-color: #ffb300;
+    }
+  </style>
+</head>
+<body>
+  <h1>💫 결핍의 고리: 무한 사이클 💫</h1>
+  <div id="ai">🧠 AI 조언자: "기회는 위험을 동반합니다. 당신의 선택은 과연...?"</div>
+  <div id="points">💰 점수: <span id="score">0</span>점</div>
+  <div id="gold">🪙 골드: <span id="goldAmount">0</span>G</div>
+  <div id="wallet">👜 지갑: <span id="walletGold">0</span>G</div>
+  <div id="highscore">🏆 최고 기록: <span id="highScore">0</span>점</div>
+  <div id="daily">📆 오늘의 미션: 20번 시도해보기 (진행: <span id="tries">0</span>/20)</div>
+  <div id="result">기회를 기다리는 중...</div>
+  <button id="clickBtn">🔁 시도하기</button>
+  <button id="resetBtn" style="display:none;">🔄 다시 하기</button>
+  <div id="history"></div>
+
+  <div id="loot-display">
+    <h3>📦 전리품</h3>
+    <div id="lootList"></div>
+    <p style="font-size: 0.8em; color: #666; margin-top: 8px;">
+      획득률: 다이아몬드 0.5%, 에메랄드 0.5%, 아쿠아마린 0.5%, 사파이어 0.5%, 자수정 0.5%, 흑요석 0.5%, 금 0.5%, 은 0.5%, 오팔 0.5%, 레인보우 다이아몬드 0.001%
+    </p>
+  </div>
+
+  <div id="shop">
+    <h3>🛒 아이템 상점</h3>
+    <button onclick="buyItem('double', 100)">🎁 더블 찬스 (100G)</button>
+    <button onclick="buyItem('shield', 100)">🛡️ 손실 방어 (100G)</button>
+    <button onclick="buyItem('jackpot100', 1000)">💥 1% 확률 골드 100배 (20회, 1000G)</button>
+    <button onclick="buyItem('jackpot10', 500)">💥 10% 확률 골드 10배 (20회, 500G)</button>
+    <button onclick="buyItem('extraTurns', 500)">🔁 다음 게임 +10회 (500G)</button>
+    <button onclick="buyItem('lootBoost', 1000)">💎 전리품 확률 +5% (다음 게임, 1000G)</button>
+  </div>
+
+  <button id="shareBtn" title="카카오톡으로 기록 공유">📤 카카오톡으로 공유하기</button>
+
+<script>
+  const MAX_TRIES_BASE = 20;
+  let extraTurns = parseInt(localStorage.getItem('extraTurns') || '0');
+  let lootBoost = parseInt(localStorage.getItem('lootBoost') || '0');
+  let MAX_TRIES = MAX_TRIES_BASE + extraTurns;
+
+  let score = 0;
+  let gold = 0;
+  let walletGold = 0;
+  let tries = 0;
+  let highScore = parseInt(localStorage.getItem('highScore')) || 0;
+
+  let shield = false;
+  let double = false;
+  let jackpot100 = false;
+  let jackpot10 = false;
+
+  // 전리품 획득 확률 0.5% 고정 (레인보우 다이아몬드만 0.001%)
+  const lootRates = {
+    '레인보우 다이아몬드': 0.001,
+    '다이아몬드': 0.5,
+    '에메랄드': 0.5,
+    '아쿠아마린': 0.5,
+    '사파이어': 0.5,
+    '자수정': 0.5,
+    '흑요석': 0.5,
+    '오팔': 0.5,
+    '금': 0.5,
+    '은': 0.5
+  };
+
+  // 전리품 보관, 로컬스토리지 저장
+  let lootInventory = JSON.parse(localStorage.getItem('lootInventory')) || {};
+  for (const item in lootRates) {
+    if (!lootInventory[item]) lootInventory[item] = 0;
+  }
+
+  const updateUI = () => {
+    document.getElementById('score').textContent = score;
+    document.getElementById('goldAmount').textContent = gold;
+    document.getElementById('walletGold').textContent = walletGold;
+    document.getElementById('tries').textContent = tries;
+    document.getElementById('highScore').textContent = highScore;
+
+    // 전리품 UI 업데이트
+    const lootList = document.getElementById('lootList');
+    lootList.innerHTML = '';
+    for (const item in lootInventory) {
+      const div = document.createElement('div');
+      div.className = 'loot-item';
+      div.textContent = lootInventory[item] > 0 ? `${item} x${lootInventory[item]}` : '?';
+      lootList.appendChild(div);
+    }
+  };
+
+  // 전리품 획득 함수 (확률 + 부스터 반영)
+  const getLoot = () => {
+    const roll = Math.random() * 100;
+    let cumulative = 0;
+    for (const item in lootRates) {
+      let rate = lootRates[item];
+      if (lootBoost) rate += 5;
+      cumulative += rate;
+      if (roll <= cumulative) {
+        return item;
+      }
+    }
+    return null;
+  };
+
+  // AI 멘트 랜덤 출력
+  const aiSay = (type) => {
+    const phrases = {
+      good: ['좋은 기회였네요!', '운이 따르네요!', '계속 도전해보세요.'],
+      bad: ['위험을 감수했군요.', '다음엔 더 나을 거예요.', '기회는 다시 옵니다.'],
+      neutral: ['세상은 늘 예측할 수 없죠.', '아무 일도 없을 때가 가장 위험합니다.']
+    };
+    const phrase = phrases[type][Math.floor(Math.random() * phrases[type].length)];
+    document.getElementById('ai').textContent = `🧠 AI 조언자: "${phrase}"`;
+  };
+
+  const clickBtn = document.getElementById('clickBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const shareBtn = document.getElementById('shareBtn');
+
+  clickBtn.onclick = () => {
+    if (tries >= MAX_TRIES) return;
+
+    clickBtn.disabled = true;
+    document.getElementById('result').textContent = '기회를 탐색 중...';
+
+    setTimeout(() => {
+      const rand = Math.random();
+      let outcome = {};
+
+      if (rand < 0.3) {
+        outcome = { text: '😱 손해를 봤습니다!', type: 'bad', points: -10, gold: 0 };
+      } else if (rand < 0.6) {
+        outcome = { text: '🤔 아무 일도 일어나지 않았습니다.', type: 'neutral', points: 0, gold: 1 };
+      } else {
+        outcome = { text: '🎉 대박! 돈을 벌었습니다!', type: 'good', points: 10, gold: 5 };
+      }
+
+      if (shield && outcome.points < 0) {
+        outcome.points = 0;
+        shield = false;
+      }
+      if (double && outcome.points > 0) {
+        outcome.points *= 2;
+        double = false;
+      }
+      if (jackpot100 && Math.random() < 0.01) {
+        outcome.gold *= 100;
+      } else if (jackpot10 && Math.random() < 0.10) {
+        outcome.gold *= 10;
+      }
+
+      score += outcome.points;
+      gold += outcome.gold;
+      walletGold += outcome.gold + outcome.points;
+      if (walletGold < 0) walletGold = 0;
+
+      tries++;
+
+      document.getElementById('result').textContent = outcome.text;
+      document.getElementById('result').className = outcome.type;
+
+      const loot = getLoot();
+      if (loot) {
+        lootInventory[loot]++;
+        localStorage.setItem('lootInventory', JSON.stringify(lootInventory));
+        const msg = document.createElement('div');
+        msg.innerHTML = `🎁 전리품 획득: <strong>${loot}</strong>! (총 ${lootInventory[loot]}개)`;
+        document.getElementById('history').prepend(msg);
+      }
+
+      const log = document.createElement('div');
+      log.textContent = `[${new Date().toLocaleTimeString()}] ${outcome.text} (${outcome.points >= 0 ? '+' : ''}${outcome.points}점, +${outcome.gold}G)`;
+      log.className = outcome.type;
+      document.getElementById('history').prepend(log);
+
+      aiSay(outcome.type);
+      updateUI();
+
+      clickBtn.disabled = false;
+
+      if (tries >= MAX_TRIES) {
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem('highScore', highScore);
+        }
+        document.getElementById('result').textContent = `🎯 ${MAX_TRIES}회 완료! 최고 기록: ${highScore}점`;
+        clickBtn.style.display = 'none';
+        resetBtn.style.display = 'block';
+      }
+    }, 500);
+  };
+
+  resetBtn.onclick = () => {
+    score = 0;
+    gold = 0;
+    tries = 0;
+    shield = false;
+    double = false;
+    jackpot100 = false;
+    jackpot10 = false;
+
+    // 전리품은 저장 유지하므로 초기화 안 함 (원하면 지우도록 수정 가능)
+    document.getElementById('history').innerHTML = '';
+
+    extraTurns = parseInt(localStorage.getItem('extraTurns') || '0');
+    lootBoost = parseInt(localStorage.getItem('lootBoost') || '0');
+    MAX_TRIES = MAX_TRIES_BASE + extraTurns;
+
+    clickBtn.style.display = 'block';
+    resetBtn.style.display = 'none';
+    document.getElementById('result').textContent = '기회를 기다리는 중...';
+
+    updateUI();
+  };
+
+  function buyItem(type, price) {
+    if (walletGold < price) {
+      alert('골드가 부족합니다!');
+      return;
+    }
+    walletGold -= price;
+
+    if (type === 'double') double = true;
+    else if (type === 'shield') shield = true;
+    else if (type === 'jackpot100') jackpot100 = true;
+    else if (type === 'jackpot10') jackpot10 = true;
+    else if (type === 'extraTurns') {
+      localStorage.setItem('extraTurns', '10');
+      alert('다음 게임에 +10회 적용됩니다.');
+    }
+    else if (type === 'lootBoost') {
+      localStorage.setItem('lootBoost', '1');
+      alert('다음 게임에 전리품 확률 +5% 적용됩니다.');
+    }
+    updateUI();
+  }
+
+  // 카카오톡 공유
+  shareBtn.onclick = () => {
+    let shareText = `💫 결핍의 고리 게임 기록 💫\n최고 기록: ${highScore}점\n현재 점수: ${score}점\n골드: ${gold}G\n지갑: ${walletGold}G\n전리품:\n`;
+    for (const item in lootInventory) {
+      if (lootInventory[item] > 0) {
+        shareText += `- ${item} x${lootInventory[item]}\n`;
+      }
+    }
+    if (navigator.share) {
+      navigator.share({
+        title: '결핍의 고리 게임 기록',
+        text: shareText,
+      }).catch(() => {
+        alert('공유에 실패했습니다.');
+      });
+    } else {
+      // fallback: 카톡 공유 URL (단순 텍스트 복사 안내)
+      prompt('아래 내용을 복사해서 카카오톡 등에 공유하세요:', shareText);
+    }
+  };
+
+  updateUI();
+</script>
+</body>
+</html>
